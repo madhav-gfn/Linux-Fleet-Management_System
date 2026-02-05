@@ -1,35 +1,80 @@
-# Architecture
+# Architecture Overview — Linux Fleet Management Lab
 
-## System Overview
+## High-Level Design
 
-The Linux Fleet Management system consists of:
+This lab simulates a small-scale Linux fleet managed through a central control node.
+The design follows real-world infrastructure principles:
 
-### Components
+- Centralized control
+- Agent-based monitoring
+- Pull-based metrics collection
+- Minimal trust surface
 
-1. **Prometheus Server**
-   - Central metrics collection
-   - Data storage and querying
-   - Alert management
+---
 
-2. **Node Exporters**
-   - System metrics collection
-   - Hardware monitoring
-   - Performance data
+## Node Roles
 
-### Data Flow
+### Manager Node
+Hostname: `manager`
 
-```
-Linux Servers → Node Exporter → Prometheus → Monitoring Dashboard
-```
+Responsibilities:
+- Acts as SSH control plane
+- Runs Prometheus (metrics collection)
+- Runs Grafana (visualization)
+- Initiates all management actions
 
-### Network Architecture
+### Worker Nodes
+Hostnames:
+- `node-1`
+- `node-2`
 
-- Prometheus: Port 9090
-- Node Exporter: Port 9100
-- Communication via HTTP/HTTPS
+Responsibilities:
+- Run Node Exporter
+- Expose system metrics
+- Accept SSH connections from manager only
 
-### Deployment Model
+---
 
-- Centralized Prometheus instance
-- Distributed node exporters on each server
-- Service-based management
+## Networking Model
+
+Each VM uses dual networking:
+
+1. NAT  
+   - Internet access (updates, downloads)
+
+2. Host-only Network (vboxnet0)  
+   - Private fleet communication
+   - SSH
+   - Prometheus scraping
+   - Grafana access
+
+No external exposure of worker nodes.
+
+---
+
+## Monitoring Flow
+
+1. Node Exporter runs on each node (port 9100)
+2. Prometheus on manager scrapes metrics every 15 seconds
+3. Metrics stored locally on manager
+4. Grafana queries Prometheus for visualization
+
+---
+
+## Security Model
+
+- SSH key-based authentication
+- No shared credentials
+- Read-only metrics exposure
+- Separate system users for services
+
+---
+
+## Why This Architecture
+
+This structure mirrors:
+- Traditional data center monitoring
+- Cloud VM fleets
+- Pre-container infrastructure
+
+It provides a strong conceptual base before introducing automation or containers.
